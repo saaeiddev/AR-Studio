@@ -46,3 +46,9 @@
 
 - Normalize numeric strings, Persian digits, coordinate objects, missing values, out-of-range values and unsupported behavior labels before strict validation. Preview reports corrections; unavailable asset IDs are skipped rather than guessed.
 - 15 automated tests passed, including invalid/untrusted values and corrected inputs. Real model output on a WebGPU device remains untested in this environment.
+
+## Requested model matching
+
+- Brain, engine and circuit board requests now limit the AI candidates to the explicitly requested curated models, plus tables or vehicles when explicitly named. Unrelated building assets are excluded from a brain-only request.
+- Missing explicitly requested curated models are added as a clearly reported automatic correction, and curated assets retain their actual names in the preview. If the asset is unavailable, the plan is rejected.
+- 18 automated tests pass, including the Persian brain prompt and adversarial model selection; end-to-end WebGPU and real GLB rendering remain unverified.

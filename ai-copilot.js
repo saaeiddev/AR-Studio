@@ -1,11 +1,39 @@
 import {getCatalog,safeAssetURL} from './library.js';
 import {generateLocalPlan} from './local-ai.js';
 const $=s=>document.querySelector(s);
+export function requestedKinds(prompt){
+ const text=prompt.toLowerCase();const kinds=[];
+ if(/مغز|brain|cerebr/i.test(text))kinds.push('brain');
+ if(/موتور|پیستون|engine/i.test(text))kinds.push('engine');
+ if(/برد الکترونیک|مدار الکترونیک|circuit board/i.test(text))kinds.push('electronics');
+ return kinds;
+}
 export function candidateAssets(prompt,catalog){
- const aliases=[[/مغز|نورون|anatomy|brain|neuro/i,'brain anatomy'],[/موتور|پیستون|engine|motor/i,'engine'],[/ماشین|خودرو|car|vehicle/i,'car vehicle'],[/برد|الکترونیک|مدار|electronics|circuit/i,'circuit electronics'],[/شهر|ساختمان|city|building/i,'city building']];
+ const required=requestedKinds(prompt);
+ // For explicitly requested curated models, only pass matching models to the AI.
+ // Optional table/vehicle assets are included only when explicitly named.
+ if(required.length){
+  const selected=catalog.filter(a=>required.includes(a.kind));
+  const requestedTable=/میز|table/i.test(prompt),requestedCar=/ماشین|خودرو|vehicle|\bcar\b/i.test(prompt);
+  if(requestedTable||requestedCar){for(const item of catalog){const n=(item.name+' '+item.category).toLowerCase();if(item.kind==='model'&&((requestedTable&&/\btable\b/.test(n))||(requestedCar&&/\bcar\b|\bvehicle\b/.test(n))))selected.push(item)}}
+  return selected.slice(0,24);
+ }
+ const aliases=[[/نورون|neuron/i,'neuron'],[/ماشین|خودرو|car|vehicle/i,'car vehicle'],[/برد|الکترونیک|مدار|electronics|circuit/i,'circuit electronics'],[/شهر|ساختمان|city|building/i,'city building']];
  let text=prompt.toLowerCase();for(const [pattern,words] of aliases)if(pattern.test(text))text+=' '+words;
  const words=text.match(/[a-z\d]{3,}/g)||[];
  return catalog.map((asset,index)=>({asset,index,score:words.reduce((n,w)=>n+((asset.name+' '+asset.category).toLowerCase().includes(w)?1:0),0)})).sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,60).map(x=>x.asset);
+}
+export function ensureRequestedModels(prompt,plan,assets){
+ const notices=[];
+ for(const kind of requestedKinds(prompt)){
+  if(plan.objects.some(o=>o.item.kind===kind))continue;
+  const item=assets.find(a=>a.kind===kind&&safeAssetURL(a.file));
+  if(!item)throw Error('The requested '+kind+' model is unavailable. No changes were made.');
+  if(plan.objects.length>=12)throw Error('The requested model could not be added because the scene is full.');
+  plan.objects.push({item,name:item.name,position:[0,0,0],size:1.2,behavior:'none'});
+  notices.push('The requested '+item.name+' model was added automatically because the AI omitted it.');
+ }
+ return notices;
 }
 // Normalize harmless model formatting differences before strict validation.
 // Never guess missing asset IDs or accept arbitrary URLs or executable behaviors.
@@ -20,7 +48,7 @@ export function normalizePlan(plan,assets){
   if(!Number.isInteger(index)||index<0||!assets[index]||!safeAssetURL(assets[index].file)){notices.push('An object referencing an unavailable model was skipped.');continue}
   let corrected=false;
   let name=typeof raw.name==='string'&&raw.name.trim()?raw.name.trim():assets[index].name;
-  if(name!==raw.name)corrected=true;if(name.length>120){name=name.slice(0,120);corrected=true}
+  if(['brain','engine','electronics'].includes(assets[index].kind)&&name!==assets[index].name){name=assets[index].name;corrected=true}if(name!==raw.name)corrected=true;if(name.length>120){name=name.slice(0,120);corrected=true}
   let pos=raw.position;if(pos&&typeof pos==='object'&&!Array.isArray(pos))pos=[pos.x,pos.y,pos.z];
   if(!Array.isArray(pos)||pos.length!==3){pos=[0,0,0];corrected=true}else pos=pos.map(v=>{const n=number(v);if(!Number.isFinite(n)){corrected=true;return 0}const bounded=Math.max(-10,Math.min(10,n));if(bounded!==n||typeof v!=='number')corrected=true;return bounded});
   let size=number(raw.size);if(!Number.isFinite(size)){size=1.6;corrected=true}else{const bounded=Math.max(.1,Math.min(5,size));if(bounded!==size||typeof raw.size!=='number')corrected=true;size=bounded}
@@ -40,7 +68,7 @@ export function validatePlan(plan,assets){
 }
 export function setupCopilot(onApply,onUndo){let plan=null;const dialog=$('#copilotDialog'),status=$('#aiStatus'),output=$('#aiPlan'),generate=$('#generateAi');
  $('#openCopilot').onclick=()=>dialog.showModal();$('#closeCopilot').onclick=()=>dialog.close();document.querySelectorAll('[data-prompt]').forEach(b=>b.onclick=()=>{$('#aiPrompt').value=b.dataset.prompt;$('#aiPrompt').focus()});
- generate.onclick=async()=>{const prompt=$('#aiPrompt').value.trim();if(!prompt){status.textContent='Please describe the experience you want to build.';return}generate.disabled=true;output.hidden=true;plan=null;status.textContent='Searching the asset collection and requesting a scene plan…';try{const catalog=await getCatalog();const assets=candidateAssets(prompt,catalog).slice(0,24);const generated=await generateLocalPlan(prompt,assets,msg=>status.textContent=msg);const normalized=normalizePlan(generated,assets);plan=validatePlan(normalized,assets);plan.notices=normalized.notices;$('#aiTitle').textContent=plan.title;$('#aiSummary').textContent=plan.summary;$('#aiLimitations').textContent=[plan.limitations,...plan.notices].filter(Boolean).join(' ');const list=$('#aiObjects');list.replaceChildren();for(const o of plan.objects){const li=document.createElement('li');li.textContent=o.name+' — '+o.item.name;list.append(li)}$('#applyAi').disabled=plan.objects.length===0;output.hidden=false;status.textContent='Review the plan before adding it to your scene.'}catch(e){status.textContent=e.message||'Unable to generate a scene.'}finally{generate.disabled=false}};
+ generate.onclick=async()=>{const prompt=$('#aiPrompt').value.trim();if(!prompt){status.textContent='Please describe the experience you want to build.';return}generate.disabled=true;output.hidden=true;plan=null;status.textContent='Searching the asset collection and requesting a scene plan…';try{const catalog=await getCatalog();const assets=candidateAssets(prompt,catalog).slice(0,24);if(!assets.length)throw Error('No matching model was found in the library. No changes were made.');const generated=await generateLocalPlan(prompt,assets,msg=>status.textContent=msg);const normalized=normalizePlan(generated,assets);plan=validatePlan(normalized,assets);plan.notices=[...normalized.notices,...ensureRequestedModels(prompt,plan,assets)];$('#aiTitle').textContent=plan.title;$('#aiSummary').textContent=plan.summary;$('#aiLimitations').textContent=[plan.limitations,...plan.notices].filter(Boolean).join(' ');const list=$('#aiObjects');list.replaceChildren();for(const o of plan.objects){const li=document.createElement('li');li.textContent=o.name+' — '+o.item.name;list.append(li)}$('#applyAi').disabled=plan.objects.length===0;output.hidden=false;status.textContent='Review the plan before adding it to your scene.'}catch(e){status.textContent=e.message||'Unable to generate a scene.'}finally{generate.disabled=false}};
  $('#applyAi').onclick=async()=>{if(!plan)return;$('#applyAi').disabled=true;status.textContent='Loading models and creating the scene…';try{await onApply(plan);status.textContent='Scene added. Use Preview to test supported interactions.';$('#undoAi').hidden=false;output.hidden=true;plan=null;dialog.close()}catch(e){status.textContent='Could not apply scene: '+e.message}finally{$('#applyAi').disabled=false}};
  $('#undoAi').onclick=()=>{onUndo();$('#undoAi').hidden=true;status.textContent='The last AI-added objects were removed.'};
 }
