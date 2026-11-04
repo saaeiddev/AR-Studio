@@ -41,3 +41,8 @@
 
 - Replaced grammar-constrained JSON generation with ordinary text generation, bounded JSON extraction and schema validation before applying. Invalid responses get one retry.
 - Twelve automated tests pass, including a check that the request never enables grammar/JSON mode. Actual WebGPU inference remains unverified here because the available browser has no working GPU.
+
+## AI object settings recovery
+
+- Normalize numeric strings, Persian digits, coordinate objects, missing values, out-of-range values and unsupported behavior labels before strict validation. Preview reports corrections; unavailable asset IDs are skipped rather than guessed.
+- 15 automated tests passed, including invalid/untrusted values and corrected inputs. Real model output on a WebGPU device remains untested in this environment.

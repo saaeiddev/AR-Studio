@@ -16,7 +16,7 @@ export function parseModelJSON(text){
  for(let i=0;i<text.length;i++){
   const c=text[i];if(start<0){if(c==='{'){start=i;depth=1}continue}
   if(inString){if(escaped)escaped=false;else if(c==='\\')escaped=true;else if(c==='"')inString=false;continue}
-  if(c==='"')inString=true;else if(c==='{')depth++;else if(c==='}'&&--depth===0){const value=JSON.parse(text.slice(start,i+1));if(!value||typeof value.title!=='string'||typeof value.summary!=='string'||typeof value.limitations!=='string'||!Array.isArray(value.objects))throw Error('AI plan is missing required fields.');return value}
+  if(c==='"')inString=true;else if(c==='{')depth++;else if(c==='}'&&--depth===0){const value=JSON.parse(text.slice(start,i+1));if(!value||!Array.isArray(value.objects))throw Error('AI plan is missing required fields.');return value}
  }
  throw Error('The model did not return a complete JSON object.');
 }

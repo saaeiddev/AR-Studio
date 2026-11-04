@@ -1,9 +1,13 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {candidateAssets,validatePlan} from '../ai-copilot.js';
+import {candidateAssets,validatePlan,normalizePlan} from '../ai-copilot.js';
 import {validateInput,validateResult} from '../server/ai-server.mjs';
 const a=[{name:'Brain anatomy',category:'Science',kind:'brain',file:'https://cdn.jsdelivr.net/gh/itayinbarr/brainproject@2929e94f521a8ddceab26bc100a98dc06b0da060/brain-atlas/models/brain.glb'},{name:'Four-cylinder engine',category:'Automotive',kind:'engine',file:'https://cdn.3dassets.dev/assets/27832/v1/model.glb'}];
 const result={title:'Brain lab',summary:'A scene',limitations:'No games',objects:[{assetIndex:0,name:'Brain',position:[0,0,0],size:1,behavior:'none'}]};
 test('Persian asset searches select relevant models',()=>{assert.equal(candidateAssets('یه اپ آموزش مغز',a)[0].kind,'brain');assert.equal(candidateAssets('مدل موتور خودرو',a)[0].kind,'engine')});
 test('valid AI plan maps only to existing assets',()=>{assert.equal(validatePlan(result,a).objects[0].item.kind,'brain');assert.throws(()=>validatePlan({...result,objects:[{...result.objects[0],assetIndex:6}]},a));assert.throws(()=>validatePlan({...result,objects:[{...result.objects[0],position:[0,999,0]}]},a))});
 test('server rejects malformed input and unsupported object data',()=>{assert.throws(()=>validateInput({prompt:'x',assets:[{id:3}]}));assert.doesNotThrow(()=>validateInput({prompt:'x',assets:[{id:0,name:'A',category:'B',kind:'model'}]}));assert.throws(()=>validateResult({...result,objects:[{...result.objects[0],behavior:'execute code'}]},a));assert.doesNotThrow(()=>validateResult(result,a))});
+
+test('normalization safely corrects common model formatting mistakes',()=>{const source={...result,objects:[{assetIndex:'۰',position:{x:'1',y:'0',z:'0'},size:'1.2',behavior:'Tap to reveal'}]};const normalized=normalizePlan(source,a);const checked=validatePlan(normalized,a);assert.equal(checked.objects[0].item.kind,'brain');assert.deepEqual(checked.objects[0].position,[1,0,0]);assert.equal(checked.objects[0].size,1.2);assert.equal(checked.objects[0].behavior,'none');assert.ok(normalized.notices.length)});
+test('unavailable model and executable behavior cannot pass normalization',()=>{const normalized=normalizePlan({...result,objects:[{assetIndex:99,name:'x'}, {...result.objects[0],behavior:'run arbitrary code'}]},a);const checked=validatePlan(normalized,a);assert.equal(checked.objects.length,1);assert.equal(checked.objects[0].behavior,'none');assert.equal(normalized.notices.length,2)});
+test('bounded coordinates and missing properties receive explicit corrections',()=>{const normalized=normalizePlan({...result,objects:[{assetIndex:0,position:[0,999,0]}]},a);assert.deepEqual(normalized.objects[0].position,[0,10,0]);assert.equal(normalized.objects[0].size,1.6);assert.ok(normalized.notices.length);assert.doesNotThrow(()=>validatePlan(normalized,a))});
