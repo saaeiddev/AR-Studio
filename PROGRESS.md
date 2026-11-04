@@ -17,3 +17,9 @@
 
 - Physical device WebXR testing and bug fixing; visual graph, animations, physics, game systems, asset management; robust schema/migrations and IndexedDB; undo/redo; offline packaging and PWA; native runtime projects and build infrastructure; design assets; production browser and device verification.
 - Three.js and fonts require a CDN. LocalStorage limits saved project size and imported GLBs with external resources are not supported reliably. Export is a single HTML file but not offline/self-contained because it fetches library code.
+
+## Asset catalog work (experimental)
+
+- Added a searchable third-party model catalog, plus a CC BY-SA brain atlas and CC0 static engine and circuit board, fetched remotely.
+- Added descriptions on picking supported brain structures in 3D preview and exported viewer, and general descriptions for engine/board. Not all brain structures have descriptions; engine and board are not annotated internally.
+- Unit tests validate catalog handling and allowlisted asset URLs. External catalog text and the upstream brain model file were confirmed available, but no WebGL rendering, interaction, exported mobile experience, AR tracking, or installable native app was verified. Sources: ASSET_CREDITS.md.

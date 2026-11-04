@@ -20,3 +20,7 @@ Run `node --test tests/*.test.mjs`. These tests cover web export encoding and ge
 ## Limitations and unfinished work
 
 The WebXR path is experimental and has not been tested on a physical device; 3D editor and player interaction have not been verified in a browser in the current environment. Native Android/iOS project export, APK/IPA builds, visual node graphs, advanced game logic, animations, project dashboard, undo/redo, IndexedDB, and offline PWA are not implemented. The current interaction is a simple property, not a visual scripting editor. No native build is generated. LocalStorage has browser-dependent size limits; export JSON backups regularly. Imported GLB assets with external resources may not work. Use only trusted projects and assets. See PROGRESS.md.
+
+## Ready-made models (experimental)
+
+The asset browser fetches a Kenney CC0 collection (primarily stylized low-poly), a static engine, a circuit board, and a named brain anatomy model. Use Explore asset library, choose a model, then Preview and tap the brain to see a label and, where provided by its source, an English description. Web exports include the same experimental picking code. The brain model and descriptions are CC BY-SA; see [ASSET_CREDITS.md](ASSET_CREDITS.md). Models remain remotely hosted and require network access. Loading, picking and AR on mobile devices have not yet been verified. Native installation is not available. The engine and circuit board are static and show only general descriptions, not full annotated part diagrams.
