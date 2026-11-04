@@ -23,3 +23,9 @@
 - Added a searchable third-party model catalog, plus a CC BY-SA brain atlas and CC0 static engine and circuit board, fetched remotely.
 - Added descriptions on picking supported brain structures in 3D preview and exported viewer, and general descriptions for engine/board. Not all brain structures have descriptions; engine and board are not annotated internally.
 - Unit tests validate catalog handling and allowlisted asset URLs. External catalog text and the upstream brain model file were confirmed available, but no WebGL rendering, interaction, exported mobile experience, AR tracking, or installable native app was verified. Sources: ASSET_CREDITS.md.
+
+## AI Copilot
+
+- Added neon prompt dialog, Farsi/English candidate matching, OpenAI Responses server adapter with JSON schema, allowlisted asset planning, preview/apply, and undo of last AI-created objects.
+- Local-only backend uses environment credentials and validates both request and AI output. Seven unit tests pass. Manual local HTTP check returned 200 for the editor and a clear 503 when provider credentials are absent.
+- No API key is configured; real model generation, provider API compatibility, browser apply, and end-to-end testing remain unverified. GitHub Pages has no AI backend, so public AI is not yet functional. A secure deployed backend with authentication, quota, rate limits and credentials is still needed. No native app builds, general game logic, or arbitrary 3D generation are provided.

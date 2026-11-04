@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --check app.js && node --check web-export.js && node --test tests/*.test.mjs
+      - run: node --check app.js && node --check web-export.js && node --check ai-copilot.js && node --check server/ai-server.mjs && node --test tests/*.test.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

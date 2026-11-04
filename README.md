@@ -24,3 +24,17 @@ The WebXR path is experimental and has not been tested on a physical device; 3D 
 ## Ready-made models (experimental)
 
 The asset browser fetches a Kenney CC0 collection (primarily stylized low-poly), a static engine, a circuit board, and a named brain anatomy model. Use Explore asset library, choose a model, then Preview and tap the brain to see a label and, where provided by its source, an English description. Web exports include the same experimental picking code. The brain model and descriptions are CC BY-SA; see [ASSET_CREDITS.md](ASSET_CREDITS.md). Models remain remotely hosted and require network access. Loading, picking and AR on mobile devices have not yet been verified. Native installation is not available. The engine and circuit board are static and show only general descriptions, not full annotated part diagrams.
+
+## AI Copilot (local development)
+
+The editor includes a neon prompt interface. A server-side OpenAI integration can propose a small scene from the existing, allowlisted library; proposals are validated and displayed before application. It does not generate new 3D geometry or a full app/game, and cannot provide unsupported features. Generated scene objects can be undone using the AI dialog.
+
+GitHub Pages is static, so the published site does **not** include the AI backend. To run it locally, use Node 20+ and configure a server-side API key and a model that supports Responses structured outputs:
+
+```sh
+export OPENAI_API_KEY='your-key'
+export OPENAI_MODEL='your-supported-model'
+node server/ai-server.mjs
+```
+
+Then open `http://127.0.0.1:8787/`. The key is read only by the local server, never sent to the browser or committed. The server binds to localhost and is not designed for public hosting; authentication, quotas, rate limiting, abuse controls, and HTTPS must be implemented before deploying a shared version. The prompt and catalog metadata are sent to the AI provider. No provider request has been tested in this environment because no API key is configured. API usage may incur charges.
