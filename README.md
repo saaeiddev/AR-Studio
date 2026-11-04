@@ -1,15 +1,22 @@
 # AR Studio — Create Beyond Reality
 
-An early development version of a browser-based 3D scene editor. Created by Amir Saeid Dehghan.
+An early-development browser-based 3D editor by Amir Saeid Dehghan. This is not yet a complete AR app/game creation platform.
 
-## Current functionality
+## What is implemented
 
-Create boxes, spheres and cylinders; import GLB (up to 5 MB); select objects; manipulate transforms using gizmos or numeric fields; change mesh colors; duplicate and delete; orbit the camera; save automatically in localStorage and export/import a versioned JSON project. Preview hides the editor grid and gizmo. Internet access is required for the Three.js modules and font CDN. Local browser storage is limited; export backups regularly.
+- Add boxes, spheres, cylinders and GLB models (up to 5 MB per file); edit transforms with gizmos or numeric inputs, colors, names and a simple tap-to-rotate interaction.
+- Orbit the viewport, duplicate or delete objects, autosave the current project locally, and import/export a versioned JSON backup.
+- Preview the scene in 3D and test the tap interaction; preview rotations are reset on exit.
+- Export a standalone HTML scene player with embedded scene data, 3D orbit controls, tap-to-rotate and experimental WebXR hit-test surface placement where the device and browser support immersive AR. The HTML still requires an internet connection to load Three.js; it is not an offline package or a PWA.
 
-## Run locally
+## Run
 
-Serve this directory with an HTTP server, for example `python3 -m http.server 8080`, then open http://localhost:8080. Requires WebGL and a modern browser.
+Run `python3 -m http.server 8080` in this directory and open http://localhost:8080 in a modern WebGL-capable browser. For WebXR camera access, serve the exported HTML over HTTPS on a compatible device/browser. iOS Safari does not provide equivalent WebXR immersive AR support; use the 3D viewer instead. AR support and behavior vary by device. The app loads Three.js and fonts from third-party CDNs.
 
-## Important limitations
+## Test
 
-This is a first editor foundation, not the requested finished product. AR/WebXR, surface tracking, behavior graphs, animation editing, project management, native Android/iOS export, independent web export, PWA, cloud builds and AI are not implemented. Preview is ordinary 3D, not AR. No APK, IPA, Xcode or Unity project is generated. GLB color modifications apply to all meshes and are not yet restored on reload. Device testing and actual screenshots are outstanding. Do not use for production work.
+Run `node --test tests/*.test.mjs`. These tests cover web export encoding and generated JavaScript syntax, not real browser rendering or AR tracking.
+
+## Limitations and unfinished work
+
+The WebXR path is experimental and has not been tested on a physical device; 3D editor and player interaction have not been verified in a browser in the current environment. Native Android/iOS project export, APK/IPA builds, visual node graphs, advanced game logic, animations, project dashboard, undo/redo, IndexedDB, and offline PWA are not implemented. The current interaction is a simple property, not a visual scripting editor. No native build is generated. LocalStorage has browser-dependent size limits; export JSON backups regularly. Imported GLB assets with external resources may not work. Use only trusted projects and assets. See PROGRESS.md.
