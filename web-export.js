@@ -1,0 +1,51 @@
+// Exported projects embed their scene data. The runtime still loads Three.js from a CDN.
+export function makeWebExport(project) {
+  const bytes = new TextEncoder().encode(JSON.stringify(project));
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  const encoded = btoa(binary);
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#151723"><title>AR Studio Experience</title><style>*{box-sizing:border-box}body{margin:0;background:#151723;color:white;font:15px system-ui}canvas{display:block}#overlay{position:absolute;top:max(16px,env(safe-area-inset-top));left:16px;right:16px;pointer-events:none}#panel{display:inline-block;max-width:420px;background:#181a27e8;border:1px solid #ffffff25;padding:14px;border-radius:12px;pointer-events:auto}h1{font-size:17px;margin:0 0 6px}p{font-size:12px;color:#c4c8df;line-height:1.5}button{background:#9cdde9;border:0;border-radius:8px;padding:10px 14px;font-weight:700;color:#121623}button:disabled{opacity:.45}#error{color:#ffc0bd}</style><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script></head><body><div id="overlay"><div id="panel"><h1 id="title"></h1><p id="message">Loading 3D experience…</p><button id="ar" disabled>View in AR</button><p id="error" role="alert"></p></div></div><script type="module">import * as THREE from 'three';import {OrbitControls} from 'three/addons/controls/OrbitControls.js';import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';const PROJECT_DATA='${encoded}';(${webRuntime.toString()})(THREE,OrbitControls,GLTFLoader,PROJECT_DATA);<\/script></body></html>`;
+}
+
+function webRuntime(THREE, OrbitControls, GLTFLoader, encoded) {
+  const $ = (s) => document.querySelector(s);
+  const raw = atob(encoded), bytes = Uint8Array.from(raw, c => c.charCodeAt(0));
+  const project = JSON.parse(new TextDecoder().decode(bytes));
+  $('#title').textContent = project.name || 'AR Studio Experience';
+  const scene = new THREE.Scene(); scene.background = new THREE.Color('#151723');
+  const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, .01, 100);
+  camera.position.set(5, 4, 7);
+  const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.xr.enabled = true; renderer.xr.setReferenceSpaceType('local'); document.body.prepend(renderer.domElement);
+  const orbit = new OrbitControls(camera, renderer.domElement); orbit.target.set(0,1,0); orbit.enableDamping=true;
+  scene.add(new THREE.HemisphereLight(0xc8d8ff,0x303040,2));
+  const light = new THREE.DirectionalLight(0xffffff,3); light.position.set(4,8,6); scene.add(light);
+  const root = new THREE.Group(); scene.add(root); const loader = new GLTFLoader();
+  function parse(data) { return new Promise((resolve,reject)=>{try{const raw=atob(data.split(',')[1]); const bytes=Uint8Array.from(raw,c=>c.charCodeAt(0));loader.parse(bytes.buffer,'',g=>resolve(g.scene),reject)}catch(e){reject(e)}}); }
+  async function create(spec) {
+    let object;
+    if(spec.type==='glb') object=await parse(spec.asset);
+    else {const geometry=spec.type==='sphere'?new THREE.SphereGeometry(.65,32,24):spec.type==='cylinder'?new THREE.CylinderGeometry(.55,.55,1.2,32):new THREE.BoxGeometry(1.2,1.2,1.2);object=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:spec.color||'#8c7cff',metalness:.2,roughness:.35}));}
+    if(spec.colorOverride) object.traverse(o=>{if(o.isMesh)for(const m of (Array.isArray(o.material)?o.material:[o.material]))if(m.color)m.color.set(spec.color)});
+    object.position.fromArray(spec.position); object.rotation.set(...spec.rotation); object.scale.fromArray(spec.scale);
+    object.userData.behavior=spec.behavior||'none'; root.add(object);
+  }
+  const ray = new THREE.Raycaster(), pointer = new THREE.Vector2();
+  function interact(x,y){pointer.set(x,y);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(root.children,true)[0];if(!hit)return;let o=hit.object;while(o.parent&&o.parent!==root)o=o.parent;if(o.userData.behavior==='rotate')o.rotation.y+=Math.PI/4;}
+  renderer.domElement.addEventListener('pointerup',e=>{if(renderer.xr.isPresenting)return;interact((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1)});
+  window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+  let hitSource=null, reference=null, reticle=null, placed=false;
+  const controller=renderer.xr.getController(0); scene.add(controller);
+  controller.addEventListener('select',()=>{if(!placed && reticle?.visible){root.position.setFromMatrixPosition(reticle.matrix);root.visible=true;reticle.visible=false;placed=true;$('#message').textContent='Scene placed. Tap objects with interactions.';}else if(placed){interact(0,0)}});
+  renderer.setAnimationLoop((_,frame)=>{if(frame&&hitSource&&!placed){const hits=frame.getHitTestResults(hitSource);reticle.visible=hits.length>0;if(hits.length){const pose=hits[0].getPose(reference);if(pose)reticle.matrix.fromArray(pose.transform.matrix)}}orbit.update();renderer.render(scene,camera)});
+  async function startAR(){let session;try{
+    session=await navigator.xr.requestSession('immersive-ar',{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:$('#overlay')}});
+    const viewer=await session.requestReferenceSpace('viewer');reference=await session.requestReferenceSpace('local');hitSource=await session.requestHitTestSource({space:viewer});
+    reticle=new THREE.Mesh(new THREE.RingGeometry(.09,.12,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x65e8eb}));reticle.matrixAutoUpdate=false;reticle.visible=false;scene.add(reticle);placed=false;root.visible=false;scene.background=null;orbit.enabled=false;
+    session.addEventListener('end',()=>{hitSource?.cancel();hitSource=null;scene.remove(reticle);reticle.geometry.dispose();reticle.material.dispose();root.position.set(0,0,0);root.visible=true;scene.background=new THREE.Color('#151723');orbit.enabled=true;$('#message').textContent='3D view. Drag to orbit; tap objects to interact.';$('#ar').disabled=false});
+    await renderer.xr.setSession(session);$('#message').textContent='Move your device to find a surface, then tap to place the scene.';$('#ar').disabled=true;
+  }catch(e){if(session)await session.end().catch(()=>{});$('#error').textContent='Could not start AR: '+e.message;$('#ar').disabled=false}}
+  $('#ar').onclick=startAR;
+  Promise.all(project.objects.map(create)).then(async()=>{ $('#message').textContent='3D view. Drag to orbit; tap objects to interact.';if(navigator.xr&&await navigator.xr.isSessionSupported('immersive-ar')){$('#ar').disabled=false}else{$('#message').textContent+=' AR requires a compatible WebXR browser and HTTPS; 3D view remains available.'} }).catch(e=>{$('#error').textContent='Could not load this scene: '+e.message});
+}
