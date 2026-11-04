@@ -42,3 +42,7 @@ Then open `http://127.0.0.1:8787/`. The current UI defaults to browser AI; the s
 ## Browser-based AI (experimental)
 
 The published editor now attempts to run Qwen2.5-1.5B locally in the browser through WebLLM; an API key or backend is not required. A WebGPU-compatible browser/GPU, sufficient GPU memory, and internet for the initial large model and asset downloads are required. The model runs on-device and is smaller and less capable than hosted AI. The model and assets are hosted externally. The returned scene is validated and reviewed before it is applied. This is not an automatic full native application/game builder. Inference has not been tested on a real GPU in this environment. The earlier local server adapter remains optional.
+
+### Brain explorer
+
+Select a brain model in the hierarchy or click it in the viewport to open the searchable Brain structures panel. Select a named structure to highlight it and show its description when supplied by the Brain Project source; select Isolate selected part to view deeper structures. The exported HTML includes the same color mapping and structure picker. The source data contains descriptions for a subset (108 names), not every structure; gaps are clearly marked. The anatomy is educational, not clinical. Rendering and AR on physical devices remain unverified.

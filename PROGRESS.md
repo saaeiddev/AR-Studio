@@ -52,3 +52,10 @@
 - Brain, engine and circuit board requests now limit the AI candidates to the explicitly requested curated models, plus tables or vehicles when explicitly named. Unrelated building assets are excluded from a brain-only request.
 - Missing explicitly requested curated models are added as a clearly reported automatic correction, and curated assets retain their actual names in the preview. If the asset is unavailable, the plan is rejected.
 - 18 automated tests pass, including the Persian brain prompt and adversarial model selection; end-to-end WebGPU and real GLB rendering remain unverified.
+
+
+## Brain explorer
+
+- Colored named brain meshes by source category and added searchable part selection, highlighting, isolate and descriptions in the editor and standalone HTML export. Editor interaction works in edit and preview modes; exports use WebXR controller raycasting for AR interaction.
+- Source data contains 437 nodes and descriptions for 108 names; missing details are explicitly marked rather than invented. Colors are category-based, not a medical reference.
+- 22 tests passed, including mocked glTF parent metadata, color assignment, isolation, fallback descriptions and export structure. WebGL rendering and actual AR/phone interactions remain unverified: the available remote browser cannot create a GPU context.
