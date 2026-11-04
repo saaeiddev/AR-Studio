@@ -6,7 +6,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const $=s=>document.querySelector(s), view=$('#view'), status=$('#status');
 const scene=new THREE.Scene();scene.background=new THREE.Color('#151723');
 const camera=new THREE.PerspectiveCamera(45,1,.1,1000);camera.position.set(5,4,7);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;view.appendChild(renderer.domElement);
+let renderer;try{renderer=new THREE.WebGLRenderer({antialias:true})}catch(error){view.innerHTML='<div class="webgl-error"><strong>3D renderer unavailable</strong><p>WebGL could not start. Try a browser with hardware acceleration enabled and updated graphics drivers.</p></div>';status.textContent='WebGL unavailable';document.querySelectorAll('button').forEach(b=>b.disabled=true);throw error}renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;view.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xc8d8ff,0x303040,2));const light=new THREE.DirectionalLight(0xffffff,3);light.position.set(4,8,6);scene.add(light);
 const grid=new THREE.GridHelper(30,30,0x48405c,0x292d3c);scene.add(grid);
 const orbit=new OrbitControls(camera,renderer.domElement);orbit.enableDamping=true;orbit.target.set(0,1,0);
