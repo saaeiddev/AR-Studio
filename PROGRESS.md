@@ -36,3 +36,8 @@
 - AI Copilot now attempts local WebLLM inference on WebGPU, without a key or an AI backend. Local AI downloads model weights on first use and has GPU/browser and memory requirements. It proposes scene plans using the existing allowlisted assets and the existing preview/apply pipeline.
 - Unit tests exercise the generated request, successful structured result and errors using a mock engine; real inference and WebGPU cannot be tested on the available GPU-disabled browser. The earlier server adapter remains present but is no longer the default.
 - This is a small on-device model, not a full app generator; it cannot create arbitrary new assets, complex behaviors or native apps.
+
+## GrammarMatcher workaround
+
+- Replaced grammar-constrained JSON generation with ordinary text generation, bounded JSON extraction and schema validation before applying. Invalid responses get one retry.
+- Twelve automated tests pass, including a check that the request never enables grammar/JSON mode. Actual WebGPU inference remains unverified here because the available browser has no working GPU.
