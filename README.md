@@ -29,7 +29,7 @@ The asset browser fetches a Kenney CC0 collection (primarily stylized low-poly),
 
 The editor includes a neon prompt interface. A server-side OpenAI integration can propose a small scene from the existing, allowlisted library; proposals are validated and displayed before application. It does not generate new 3D geometry or a full app/game, and cannot provide unsupported features. Generated scene objects can be undone using the AI dialog.
 
-GitHub Pages is static, so the published site does **not** include the AI backend. To run it locally, use Node 20+ and configure a server-side API key and a model that supports Responses structured outputs:
+GitHub Pages uses the browser-based AI described below. To use the optional separate OpenAI server adapter locally instead, use Node 20+ and configure a server-side API key and a model that supports Responses structured outputs:
 
 ```sh
 export OPENAI_API_KEY='your-key'
@@ -37,4 +37,8 @@ export OPENAI_MODEL='your-supported-model'
 node server/ai-server.mjs
 ```
 
-Then open `http://127.0.0.1:8787/`. The key is read only by the local server, never sent to the browser or committed. The server binds to localhost and is not designed for public hosting; authentication, quotas, rate limiting, abuse controls, and HTTPS must be implemented before deploying a shared version. The prompt and catalog metadata are sent to the AI provider. No provider request has been tested in this environment because no API key is configured. API usage may incur charges.
+Then open `http://127.0.0.1:8787/`. The current UI defaults to browser AI; the server adapter is available for separate integration. The key is read only by the local server, never sent to the browser or committed. The server binds to localhost and is not designed for public hosting; authentication, quotas, rate limiting, abuse controls, and HTTPS must be implemented before deploying a shared version. The prompt and catalog metadata are sent to the AI provider. No provider request has been tested in this environment because no API key is configured. API usage may incur charges.
+
+## Browser-based AI (experimental)
+
+The published editor now attempts to run Qwen2.5-1.5B locally in the browser through WebLLM; an API key or backend is not required. A WebGPU-compatible browser/GPU, sufficient GPU memory, and internet for the initial large model and asset downloads are required. The model runs on-device and is smaller and less capable than hosted AI. The model and assets are hosted externally. The returned scene is validated and reviewed before it is applied. This is not an automatic full native application/game builder. Inference has not been tested on a real GPU in this environment. The earlier local server adapter remains optional.

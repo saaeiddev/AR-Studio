@@ -29,3 +29,10 @@
 - Added neon prompt dialog, Farsi/English candidate matching, OpenAI Responses server adapter with JSON schema, allowlisted asset planning, preview/apply, and undo of last AI-created objects.
 - Local-only backend uses environment credentials and validates both request and AI output. Seven unit tests pass. Manual local HTTP check returned 200 for the editor and a clear 503 when provider credentials are absent.
 - No API key is configured; real model generation, provider API compatibility, browser apply, and end-to-end testing remain unverified. GitHub Pages has no AI backend, so public AI is not yet functional. A secure deployed backend with authentication, quota, rate limits and credentials is still needed. No native app builds, general game logic, or arbitrary 3D generation are provided.
+
+
+## Browser AI fallback
+
+- AI Copilot now attempts local WebLLM inference on WebGPU, without a key or an AI backend. Local AI downloads model weights on first use and has GPU/browser and memory requirements. It proposes scene plans using the existing allowlisted assets and the existing preview/apply pipeline.
+- Unit tests exercise the generated request, successful structured result and errors using a mock engine; real inference and WebGPU cannot be tested on the available GPU-disabled browser. The earlier server adapter remains present but is no longer the default.
+- This is a small on-device model, not a full app generator; it cannot create arbitrary new assets, complex behaviors or native apps.
